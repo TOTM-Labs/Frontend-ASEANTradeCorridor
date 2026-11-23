@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { BadgeCheck, CalendarCheck, Download, EyeOff, FileJson, Fingerprint, Lock, PenLine, Upload } from 'lucide-react';
+import { BadgeCheck, CalendarCheck, ChevronDown, Download, EyeOff, FileJson, FileText, Fingerprint, Lock, PenLine, Upload } from 'lucide-react';
 import { PORTAL } from '@/config/portal';
 import {
-  Button, Card, CopyId, FileDrop, KeyValue, Mark, PageHeader, Spinner, StatusPill, WithFlag,
+  Button, Card, CopyId, ElcReadOnly, FileDrop, KeyValue, Mark, PageHeader, Spinner, StatusPill, WithFlag,
 } from '@/shared/components';
+import { formFromJson, shortGoods } from '@/shared/services/elcModel';
 import { downloadJson } from '@/shared/services/files';
-import { fmtDate, fmtDateTime } from '@/shared/services/format';
+import { fmtAmount, fmtDate, fmtDateTime } from '@/shared/services/format';
 import { takeVerifyHandoff } from '@/shared/services/session';
 import {
   looksLikeJwt, looksLikeVc, parseCredentialText, verifyCredential, type Check, type Verification,
@@ -20,8 +21,8 @@ type State =
 
 export function VerifyPage() {
   const [state, setState] = useState<State>({ kind: 'idle' });
-  // Check drop-downs always start closed; the verdict card says what matters.
-  const [open, setOpen] = useState<Record<string, boolean>>({});
+  // Check drop-downs start closed, and only one is open at a time.
+  const [open, setOpen] = useState<string | null>(null);
 
   const run = async (vc: unknown, fileName: string) => {
     if (!looksLikeVc(vc) && !looksLikeJwt(vc)) {
@@ -30,7 +31,7 @@ export function VerifyPage() {
     }
     setState({ kind: 'checking', fileName });
     const result = await verifyCredential(vc);
-    setOpen({});
+    setOpen(null);
     setState({ kind: 'done', fileName, result });
   };
 
@@ -119,18 +120,21 @@ export function VerifyPage() {
         </div>
       ) : (
         <div className="page-grid">
+          <div className="verify-main">
           <Card padded={false} data-tour="verify-checks">
             <div className="checks__head">
               <h2>Verification checks</h2>
               <span className="checks__file">{state.kind === 'done' && <span className={`via via--${state.result.platform.toLowerCase()}`}>via {state.result.platform}</span>}<FileJson size={14} /> {state.fileName}</span>
             </div>
             {(state.kind === 'checking' ? PENDING : state.result.checks).map((c) => (
-              <CheckRow key={c.id} check={c} pending={state.kind === 'checking'} open={!!open[c.id]}
+              <CheckRow key={c.id} check={c} pending={state.kind === 'checking'} open={open === c.id}
                 notReliedOn={state.kind === 'done' && changedAfterSigning(state.result) && c.id !== 'integrity'}
-                onToggle={() => setOpen((o) => ({ ...o, [c.id]: !o[c.id] }))} />
+                onToggle={() => setOpen((o) => (o === c.id ? null : c.id))} />
             ))}
             <div className="checks__foot"><Lock size={13} /> Only the result is stored. The eLC content is checked, never kept.</div>
           </Card>
+          {state.kind === 'done' && <ElcPreview r={state.result} />}
+          </div>
           <div className="sticky">
             {state.kind === 'checking' ? (
               <Card><div className="verdict verdict--wait"><Spinner size={22} /><div className="verdict__text"><strong>Checking…</strong><span>Asking the issuer registry and status service.</span></div></div></Card>
@@ -261,6 +265,68 @@ function ResultCard({ r }: { r: Verification }) {
           <p className="result__warn">These details can't be trusted. The file was changed after {who} signed it.</p>
         )}
       </div>
+    </Card>
+  );
+}
+
+/** The eLC's key fields under the checks, as signed; "View full eLC" opens every field. Hidden when the file changed. */
+function ElcPreview({ r }: { r: Verification }) {
+  const [full, setFull] = useState(false);
+  const f = r.fields;
+  if (!f.lcNumber) return null;
+  const str = (v: unknown) => (v == null || v === '' ? '' : String(v));
+  const changed = changedAfterSigning(r);
+  const intact = r.checks.find((c) => c.id === 'integrity')?.state === 'pass';
+  const docs = Array.isArray(f.documentsRequired)
+    ? f.documentsRequired.map(String)
+    : str(f.documentsRequired).split(/\n|\+/).map((d) => d.trim()).filter(Boolean);
+  const lower = (v: unknown) => str(v).toLowerCase();
+  const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+  const items: { label: string; value: string; sub?: string }[] = [
+    { label: 'Applicant', value: str(f.applicantName), sub: str(f.applicantAddress) },
+    { label: 'Beneficiary', value: str(f.beneficiaryName), sub: str(f.beneficiaryAddress) },
+    { label: 'Amount', value: f.amount ? fmtAmount(str(f.currency), str(f.amount)) : '', sub: cap([lower(f.formOfCredit), lower(f.availableBy)].filter(Boolean).join(' · ')) },
+    { label: 'Expires', value: f.expiryDate ? fmtDate(str(f.expiryDate)) : '', sub: str(f.expiryPlace) },
+    { label: 'Goods', value: shortGoods(str(f.goodsDescription ?? f.goods), 60), sub: f.portOfLoading && f.portOfDischarge ? `${str(f.portOfLoading).split(',')[0]} → ${str(f.portOfDischarge).split(',')[0]}` : str(f.incoterm) },
+    { label: 'Available with', value: str(f.availableWith ?? f.advisingBankName ?? f.advisingBankBic), sub: cap(lower(f.availableBy)) },
+    { label: 'Documents required', value: docs.length ? shortGoods(docs[0], 60) : '', sub: docs.length ? `${docs.length} document${docs.length === 1 ? '' : 's'}` : '' },
+    { label: 'Applicable rules', value: str(f.applicableRules) },
+  ].filter((x) => x.value);
+  const total = Object.entries(f).filter(([k, v]) => k !== 'id' && v != null && v !== '').length;
+  const signedOn = f.dateOfIssue ? ` on ${fmtDate(str(f.dateOfIssue))}` : '';
+  return (
+    <Card padded={false} className="elc-preview">
+      <div className="elc-preview__head">
+        <span className="elc-preview__icon"><FileText size={16} /></span>
+        <div className="elc-preview__title">
+          <strong>eLC preview</strong>
+          <span>Documentary credit · as signed by {r.issuerName}{signedOn}</span>
+        </div>
+        <span className="grow" />
+        {intact && <StatusPill status="Content matches signature" tone="ok" />}
+      </div>
+      {changed ? (
+        <div className="elc-preview__hidden"><EyeOff size={14} /> Hidden: the file was changed after signing, so its contents can't be trusted.</div>
+      ) : (
+        <>
+          <div className="elc-preview__grid">
+            {items.map((x) => (
+              <div key={x.label}>
+                <span className="elc-preview__label">{x.label}</span>
+                <span className="elc-preview__value" title={x.value}>{x.value}</span>
+                {x.sub && <span className="elc-preview__sub" title={x.sub}>{x.sub}</span>}
+              </div>
+            ))}
+          </div>
+          {full && <div className="elc-preview__full"><ElcReadOnly form={formFromJson(f).form} /></div>}
+          <div className="elc-preview__foot">
+            <span>Showing {full ? 'all' : `${items.length} of ${total}`} fields</span>
+            <button className="link-btn" onClick={() => setFull((v) => !v)} aria-expanded={full}>
+              {full ? 'Show less' : 'View full eLC'} <ChevronDown size={14} className={full ? 'rot' : ''} />
+            </button>
+          </div>
+        </>
+      )}
     </Card>
   );
 }
