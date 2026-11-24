@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 import { JURISDICTIONS, PORTAL } from '@/config/portal';
 import { Banner, Button, Checkbox, Field } from '@/shared/components';
+import { Flag } from '@/shared/components/Flag/Flag';
 import { useAuth } from '@/shared/services/auth';
 import './Login.css';
 
@@ -41,14 +42,13 @@ export function LoginPage() {
     <div className="login">
       <div className="login__panel">
         <div className="login__brand">
-          <span className="brand__logo" aria-hidden>α</span>
-          <span className="brand__text">
-            <span className="brand__name">{PORTAL.bank.name}</span>
-            <span className="brand__sub">{JURISDICTIONS[PORTAL.bank.jurisdiction].name}</span>
-          </span>
+          <img className="login__logo" src={PORTAL.brand.logo} alt={PORTAL.brand.name} />
         </div>
         <h1>Sign in</h1>
-        <p className="login__sub">{PORTAL.bank.product} portal</p>
+        <p className="login__sub">
+          <Flag j={JURISDICTIONS[PORTAL.bank.jurisdiction]} />
+          {PORTAL.brand.portal} · {JURISDICTIONS[PORTAL.bank.jurisdiction].name}
+        </p>
         {error && <Banner tone="bad" title={error} />}
         <form onSubmit={(e) => void submit(e)} className="login__form" noValidate>
           <Field label="User ID" htmlFor="username">

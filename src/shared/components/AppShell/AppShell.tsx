@@ -5,6 +5,7 @@ import { useDemo } from '@/demo/DemoProvider';
 import { TestDocsToggle } from '@/test-docs/TestDocsToggle'; // test-docs
 import { JURISDICTIONS, PORTAL } from '@/config/portal';
 import { initials, useAuth } from '@/shared/services/auth';
+import { Flag } from '@/shared/components/Flag/Flag';
 import './AppShell.css';
 
 const NAV = [
@@ -20,14 +21,10 @@ export function AppShell() {
   return (
     <div className={`shell${collapsed ? ' shell--collapsed' : ''}`}>
       <aside className="sidebar">
-        <div className="brand">
-          <span className="brand__logo" aria-hidden>α</span>
-          <span className="brand__text">
-            <span className="brand__name">
-              {PORTAL.bank.name}
-            </span>
-            <span className="brand__sub">{JURISDICTIONS[PORTAL.bank.jurisdiction].name}</span>
-          </span>
+        <div className="brand" title={`${PORTAL.brand.portal} · ${JURISDICTIONS[PORTAL.bank.jurisdiction].name}`}>
+          <img className="brand__img" src={PORTAL.brand.logo} alt={PORTAL.brand.name} />
+          <span className="brand__mark" aria-hidden>ATC</span>
+          <span className="brand__flag"><Flag j={JURISDICTIONS[PORTAL.bank.jurisdiction]} /></span>
         </div>
         <nav className="nav">
           {NAV.filter((n) => n.show).map(({ to, label, icon: Icon }) => (

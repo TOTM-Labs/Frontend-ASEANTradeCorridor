@@ -24,6 +24,12 @@ export interface PartnerBank {
 }
 
 export const PORTAL = {
+  /** The shared brand both country portals carry (ASEAN Trade Corridor). */
+  brand: {
+    name: 'ASEAN Trade Corridor',
+    portal: 'ATC Digital Portal',
+    logo: '/atc-logo.svg',
+  },
   bank: {
     name: 'Bank Alpha',
     product: 'Trade Finance',
