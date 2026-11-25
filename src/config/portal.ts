@@ -40,7 +40,7 @@ export const PORTAL = {
     bic: 'ALPHIDJA',
   },
   /** Role label shown under the signed-in user's name (the name comes from the login, see server/auth.js). */
-  userRole: 'Trade Operations',
+  userRole: 'ALPHA BANK INDONESIA',
   /** Counterparty banks that can be picked as available-with / drawee / advising bank. */
   partners: [{ name: 'Bank Beta', bic: 'BETAVNVX', jurisdiction: 'VN', platform: 'PILA' }] as PartnerBank[],
   /** Times in the audit log are shown in this zone. */
