@@ -1,4 +1,5 @@
-.login { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 24px 16px; background: var(--bg); }
+.login { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 24px 16px; background: var(--bg); }
+.login > :not(.atc-bg) { position: relative; z-index: 1; }
 .login__panel { width: 100%; max-width: 440px; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 40px; }
 .login__brand { display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
 .login__logo { display: block; width: 220px; height: auto; }

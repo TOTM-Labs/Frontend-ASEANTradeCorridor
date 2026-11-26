@@ -5,6 +5,7 @@ import { JURISDICTIONS, PORTAL } from '@/config/portal';
 import { Banner, Button, Checkbox, Field } from '@/shared/components';
 import { Flag } from '@/shared/components/Flag/Flag';
 import { useAuth } from '@/shared/services/auth';
+import { LoginBackground } from './LoginBackground';
 import './Login.css';
 
 export function LoginPage() {
@@ -40,6 +41,7 @@ export function LoginPage() {
 
   return (
     <div className="login">
+      <LoginBackground />
       <div className="login__panel">
         <div className="login__brand">
           <img className="login__logo" src={PORTAL.brand.logo} alt={PORTAL.brand.name} />
