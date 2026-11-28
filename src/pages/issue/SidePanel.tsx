@@ -20,12 +20,22 @@ interface Props {
   trustedPartner: string | null;
   /** Issued state: the Send to advising bank card. */
   sendCard?: ReactNode;
+  /** The issued eLC has been sent: the send card moves to the top and the issued card is not shown. */
+  sent?: boolean;
 }
 
 export function SidePanel(p: Props) {
   const navigate = useNavigate();
   const total = REQUIRED_KEYS.length;
   const ready = p.done === total;
+  if (p.phase === 'issued' && p.issued && p.sent) {
+    return (
+      <div className="sticky" data-tour="issued">
+        {p.sendCard}
+        <ElcSummaryCard form={p.form} />
+      </div>
+    );
+  }
   if (p.phase === 'issued' && p.issued) {
     return (
       <div className="sticky">

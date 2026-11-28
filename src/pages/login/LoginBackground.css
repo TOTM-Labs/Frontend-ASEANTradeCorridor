@@ -1,47 +1,22 @@
-/* ATC orange (from the logo) and its tints. */
-.atc-bg {
-  --atc-o: #FE8926; --atc-o-deep: #E2650A; --atc-o-soft: #FFD3AE; --atc-o-pale: #FFF1E5;
-  position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #fff;
-}
+/* Full-screen globe behind the sign-in card. */
+.atc-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #fff; }
 
-.atc-ring { position: absolute; aspect-ratio: 1; transform: translate(-50%, -50%); }
-/* Top-right ring: centre near the corner, partly off screen. Bottom-left ring: smaller, mostly off screen. */
-.atc-ring--tr { left: 89%; top: 12%; width: clamp(360px, 46vw, 900px); }
-.atc-ring--bl { left: 5%; top: 92%; width: clamp(280px, 36vw, 700px); }
+/* Cover the screen; anchor a little left of centre so the globe sits behind the card. */
+.atc-bg__globe { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 58% 50%;
+  animation: atc-bg-in 1.2s ease-out both; }
 
-/* Soft halo behind the ring. */
-.atc-ring__glow { position: absolute; inset: -22%; border-radius: 50%;
-  background: radial-gradient(circle, rgba(254, 137, 38, .10) 0%, rgba(254, 137, 38, .05) 40%, transparent 68%); }
+/* Light veil at the edges keeps the card and footer readable. */
+.atc-bg__veil { position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0) 45%, rgba(255, 255, 255, .55) 100%); }
 
-/* The thick ring: a conic gradient with a bright sheen, cut to a ring by a radial mask, turning slowly. */
-.atc-ring__band { position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(from 0deg,
-    var(--atc-o-pale) 0deg, var(--atc-o-soft) 40deg, var(--atc-o) 120deg, var(--atc-o-deep) 200deg,
-    var(--atc-o) 260deg, #FFF6EE 300deg, #FFFFFF 306deg, var(--atc-o-soft) 320deg, var(--atc-o-pale) 360deg);
-  -webkit-mask: radial-gradient(circle, transparent 0 49%, #000 49.6% 70.4%, transparent 71%);
-          mask: radial-gradient(circle, transparent 0 49%, #000 49.6% 70.4%, transparent 71%);
-  animation: atc-spin 16s linear infinite; }
-.atc-ring--bl .atc-ring__band { animation-duration: 20s; animation-direction: reverse; }
-
-/* Thin outer circle with a dot travelling round it. */
-.atc-ring__orbit { position: absolute; inset: -12%; border-radius: 50%; border: 1px solid rgba(226, 101, 10, .16);
-  animation: atc-spin 22s linear infinite; }
-.atc-ring--bl .atc-ring__orbit { animation-duration: 28s; animation-direction: reverse; }
-.atc-ring__dot { position: absolute; left: 50%; top: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
-  background: var(--atc-o-deep); box-shadow: 0 0 0 4px rgba(254, 137, 38, .18), 0 0 14px 3px rgba(254, 137, 38, .45); }
-
-/* Faint specks that drift and twinkle. */
-.atc-speck { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: rgba(226, 101, 10, .35);
-  animation: atc-twinkle 6s ease-in-out infinite; }
-
-@keyframes atc-spin { to { transform: rotate(360deg); } }
-@keyframes atc-twinkle { 0%, 100% { opacity: .15; transform: translateY(0); } 50% { opacity: .7; transform: translateY(-8px); } }
+@keyframes atc-bg-in { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .atc-ring__band, .atc-ring__orbit, .atc-speck { animation: none; }
+  .atc-bg__globe { display: none; }
+  .atc-bg { background: radial-gradient(circle at 58% 50%, #FFE7D3 0%, #FFF6EE 38%, #FFFFFF 70%); }
 }
 
-/* Phones: the rings sit behind the card and footer, so keep them lighter. */
+/* Phones: the globe sits behind the card and footer, so keep it lighter. */
 @media (max-width: 600px) {
-  .atc-ring { opacity: .45; }
+  .atc-bg__globe { opacity: .55; object-position: 62% 50%; }
 }

@@ -1,10 +1,9 @@
-.login { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 24px 16px; background: var(--bg); }
+.login { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px 16px; background: var(--bg); }
 .login > :not(.atc-bg) { position: relative; z-index: 1; }
-.login__panel { width: 100%; max-width: 440px; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 40px; }
-.login__brand { display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
-.login__logo { display: block; width: 220px; height: auto; }
+.login__panel { width: 100%; max-width: 440px; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 32px 36px 36px; }
+.login__logo { display: block; width: 180px; height: auto; margin-bottom: -4px; }
 .login__panel h1 { font-size: 22px; font-weight: 600; text-align: center; }
-.login__sub { color: var(--muted); margin: 6px 0 24px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.login__sub { color: var(--muted); margin: 8px 0 24px; font-size: 13.5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .login__sub .flag { width: 18px; height: auto; }
 .login__form { display: flex; flex-direction: column; gap: 16px; }
 .login__form .btn { margin-top: 6px; box-shadow: 0 6px 16px rgba(43, 89, 168, .25); }

@@ -29,8 +29,6 @@ export function ElcDetailPage() {
   const sendCtl = useSendElc(rec.data?.txId, vc, rec.data?.sent ?? null);
 
   const form = useMemo(() => (vc ? formFromVc(vc) : null), [vc]);
-  const attachments = (vc?.credentialSubject as { attachments?: { filename: string; mimeType?: string }[] } | undefined)?.attachments
-    ?? (vc?.attachments as { filename: string; mimeType?: string }[] | undefined) ?? [];
 
   const loadFile = async (files: File[]) => {
     setFileError(null);
@@ -76,7 +74,7 @@ export function ElcDetailPage() {
             {form ? "Open a section to review it. Issued eLCs can't be edited; changes need an amendment."
               : 'The portal stores IDs and status only, not the eLC itself. Open the signed eLC file to see its details.'}
           </Banner>
-          {form ? <ElcReadOnly form={form} attachments={attachments} /> : (
+          {form ? <ElcReadOnly form={form} /> : (
             <FileDrop large accept=".json,application/json" onFiles={(f) => void loadFile(f)}
               title={<>Drop the signed eLC file or <span className="drop__link">browse</span></>}
               hint="It stays in this browser; only its VC ID is compared with this record." />

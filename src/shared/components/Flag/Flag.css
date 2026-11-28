@@ -1,2 +1,4 @@
-.flag { width: 18px; height: 12px; border-radius: 2px; flex: none; }
+.flag { width: 18px; height: 12px; border-radius: 2px; flex: none;
+  /* Soft shadow so a white stripe never melts into a white background. */
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .28), 0 0 0 .5px rgba(15, 23, 42, .12); }
 .with-flag { display: inline-flex; align-items: center; gap: 8px; }

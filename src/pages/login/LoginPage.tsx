@@ -42,14 +42,12 @@ export function LoginPage() {
   return (
     <div className="login">
       <LoginBackground />
+      <img className="login__logo" src={PORTAL.brand.logo} alt={PORTAL.brand.name} />
       <div className="login__panel">
-        <div className="login__brand">
-          <img className="login__logo" src={PORTAL.brand.logo} alt={PORTAL.brand.name} />
-        </div>
-        <h1>Sign in</h1>
+        <h1>Sign in to ATC</h1>
         <p className="login__sub">
           <Flag j={JURISDICTIONS[PORTAL.bank.jurisdiction]} />
-          {PORTAL.brand.portal} · {JURISDICTIONS[PORTAL.bank.jurisdiction].name}
+          {JURISDICTIONS[PORTAL.bank.jurisdiction].name}
         </p>
         {error && <Banner tone="bad" title={error} />}
         <form onSubmit={(e) => void submit(e)} className="login__form" noValidate>

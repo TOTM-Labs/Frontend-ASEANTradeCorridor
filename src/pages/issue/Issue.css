@@ -54,3 +54,35 @@
 .send-card__ref { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 8px; }
 .send-card__note { font-size: 12px; margin: 0 0 8px; }
 .banner-sent { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px; color: var(--ok); }
+
+/* Step tabs (non-numbered): one strip across the page, under the header. */
+.steps { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 4px; margin-bottom: 16px; overflow-x: auto; }
+.steps__tab { flex: 1 1 0; min-width: max-content; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: none;
+  padding: 10px 14px; border-radius: 8px; font: inherit; font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer; position: relative; white-space: nowrap; }
+.steps__tab:hover:not(:disabled) { background: var(--bg-soft); color: var(--ink); }
+.steps__tab--on { color: var(--primary); font-weight: 600; }
+.steps__tab--on::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: -4px; height: 2px; border-radius: 2px; background: var(--primary); }
+.steps__tab:disabled { cursor: default; }
+.steps__mark { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; }
+.steps__mark--done { background: var(--ok-mark); }
+.steps__mark--todo { background: var(--bg-sunk); color: var(--faint); }
+.steps__mark--bad { background: var(--bad-ink); }
+.steps__mark--on { background: var(--primary-soft); box-shadow: inset 0 0 0 1.5px var(--primary); }
+.steps__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+
+/* One section per step, with Back / Next. */
+.step-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.step-card__head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.step-card__nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+.step-card__nav .btn svg:last-child { margin-left: 2px; }
+
+/* "eLC sent" pop-up. */
+.sent-modal { width: 440px; }
+.sent-modal__rows { margin: 16px 0 0; padding: 4px 14px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--line); text-align: left; font-size: 13px; }
+.sent-modal__rows > div { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; }
+.sent-modal__rows > div + div { border-top: 1px solid var(--line); }
+.sent-modal__rows dt { color: var(--muted); }
+.sent-modal__rows dd { margin: 0; text-align: right; }
+.sign-modal .sent-modal__wait { display: flex; align-items: flex-start; gap: 8px; text-align: left; margin-top: 14px; font-size: 12.5px; }
+.sent-modal__dot { width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; flex: none; margin-top: 5px; }
+.sent-modal__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
