@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2, Download, Plus, Save, Send, Upload } from 'lucide-react';
-import { PORTAL, bankLabel } from '@/config/portal';
-import { Banner, Button, Card, FieldValues, PageHeader } from '@/shared/components';
+import { ArrowLeft, ArrowRight, CheckCircle2, Save, Send, Upload } from 'lucide-react';
+import { JURISDICTIONS, OWN_REGISTRY, PORTAL, bankLabel } from '@/config/portal';
+import { Banner, Button, Card, PageHeader } from '@/shared/components';
 import {
-  SECTIONS, apiData, displayValue, emptyForm, formFromJson, requiredDone, sectionErrors, sectionSummary,
+  REQUIRED_KEYS, SECTIONS, apiData, emptyForm, formFromJson, requiredDone, sectionErrors, sectionSummary,
   validate, type ElcForm, type SectionId,
 } from '@/shared/services/elcModel';
-import { downloadJson, readBase64, readJson } from '@/shared/services/files';
+import { readBase64, readJson } from '@/shared/services/files';
 import { fmtDateTime } from '@/shared/services/format';
 import { ApiError } from '@/shared/services/http';
 import { rememberSigned } from '@/shared/services/session';
@@ -40,7 +40,6 @@ export function IssuePage() {
   const [notice, setNotice] = useState<{ tone: 'ok' | 'bad' | 'info'; title: string; text?: string } | null>(null);
   const [issued, setIssued] = useState<IssueResponse | null>(null);
   const [issuedAt, setIssuedAt] = useState<string | null>(null);
-  const [trustedPartner, setTrustedPartner] = useState<string | null>(null);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [origin, setOrigin] = useState<Draft['origin']>('manual');
   const importInput = useRef<HTMLInputElement>(null);
@@ -60,11 +59,27 @@ export function IssuePage() {
   const isIssued = phase === 'issued' && issued;
   const errors = useMemo(() => validate(form), [form]);
   const done = requiredDone(errors);
+
+  // The sign card stays hidden until every required field has been filled once. After that it stays,
+  // so clearing a field shows what needs attention instead of the card disappearing.
+  const [signCardShown, setSignCardShown] = useState(false);
+  useEffect(() => { if (!signCardShown && done === REQUIRED_KEYS.length) setSignCardShown(true); }, [done, signCardShown]);
   const issues = Object.keys(errors).filter((k) => attempted || touched.has(k)).length;
   const show = (k: string) => attempted || touched.has(k);
 
-  // A filled (issued) eLC has no attachments step.
-  const sections = isIssued ? SECTIONS.filter((s) => s.id !== 'attachments') : SECTIONS;
+  // "Fix 3 issues before signing": shown after Sign is pressed with fields missing or wrong, one line per section.
+  const issueLines = attempted ? SECTIONS.flatMap((s) => {
+    const errs = sectionErrors(s, errors);
+    if (!errs.length) return [];
+    const labels = errs.map((k) => (k === 'documentsRequired' ? 'Documents required' : s.fields.find((f) => f.key === k)?.label ?? k));
+    const list = labels.length > 1 ? `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}` : labels[0];
+    const allMissing = errs.every((k) => errors[k] === 'Required');
+    return [`${STEP_LABEL[s.id]} · ${list} ${allMissing ? (labels.length > 1 ? 'are required' : 'is required') : (labels.length > 1 ? 'need fixing' : 'needs fixing')}.`];
+  }) : [];
+  const issueCount = attempted ? Object.keys(errors).length : 0;
+
+  // No attachments step: the eLC carries no attachment files (only the optional embedded PDF copy).
+  const sections = SECTIONS.filter((s) => s.id !== 'attachments');
   const steps: StepItem[] = sections.map((s) => {
     const errs = sectionErrors(s, errors);
     const state = isIssued ? 'done'
@@ -75,18 +90,6 @@ export function IssuePage() {
   const current = sections.find((s) => s.id === step) ?? sections[0];
   const stepIndex = sections.indexOf(current);
 
-  // "Bank A · … is a trusted partner": registry answer for the bank the eLC is available with.
-  useEffect(() => {
-    const partner = PORTAL.partners.find((p) => bankLabel(p.name, p.jurisdiction) === form.fields.availableWith);
-    if (!partner) { setTrustedPartner(null); return; }
-    let live = true;
-    trustApi.bankByBic(partner.bic).then(
-      (r) => live && setTrustedPartner(r.data.isTrusted ? form.fields.availableWith : null),
-      () => live && setTrustedPartner(null),
-    );
-    return () => { live = false; };
-  }, [form.fields.availableWith]);
-
   const setField = (key: string, value: string) => setForm((f) => ({ ...f, fields: { ...f.fields, [key]: value } }));
   const touch = (key: string) => setTouched((t) => (t.has(key) ? t : new Set(t).add(key)));
 
@@ -96,6 +99,7 @@ export function IssuePage() {
       const { form: next, ignored, count } = formFromJson(await readJson(file));
       setForm(next);
       setOrigin('import');
+      setSignCardShown(false);
       setTouched(new Set());
       setAttempted(false);
       setNotice({ tone: 'info', title: `Imported ${count} field${count === 1 ? '' : 's'} from ${file.name}`, text: ignored.length ? `Not used: ${ignored.slice(0, 6).join(', ')}${ignored.length > 6 ? '…' : ''}` : 'Check each section, then sign.' });
@@ -107,6 +111,7 @@ export function IssuePage() {
   const fillSample = () => {
     setForm(sampleElc());
     setOrigin('manual');
+    setSignCardShown(false);
     setTouched(new Set());
     setAttempted(false);
     goFirst();
@@ -159,9 +164,10 @@ export function IssuePage() {
 
   const openDraft = (d: Draft) => {
     setForm(d.form);
-    setAttachments(d.attachments);
+    setAttachments([]); // attachments are no longer part of an eLC; ignore any kept in older drafts
     setEmbedPdf(d.embedPdf);
     setOrigin(d.origin);
+    setSignCardShown(false);
     setDraftId(d.id);
     setTouched(new Set());
     setAttempted(false);
@@ -206,30 +212,23 @@ export function IssuePage() {
 
   const reset = () => {
     setForm(emptyForm()); setAttachments([]); setTouched(new Set()); setAttempted(false);
-    setPhase('edit'); setIssued(null); setNotice(null); setDraftId(null); setOrigin('manual'); setSentPopup(false); goFirst();
+    setPhase('edit'); setIssued(null); setNotice(null); setDraftId(null); setOrigin('manual'); setSentPopup(false); setSignCardShown(false); goFirst();
   };
 
-  // Header actions: editing tools while drafting and once the eLC has been sent (as in the design); download /
-  // issue another between signing and sending. After the send, any editing tool starts a new eLC.
-  const showEditTools = !isIssued || isSent;
+  // Header actions are the same in every state (as in the design). Once the eLC is issued, any of them starts a new eLC.
   const fresh = (then?: () => void) => () => { if (isIssued) reset(); then?.(); };
 
   return (
     <>
       <PageHeader
-        title={isIssued && !isSent ? 'eLC issued' : 'Issue eLC'}
-        actions={showEditTools ? (
+        title="Issue eLC"
+        actions={(
           <>
             <FillDetailsButton onFill={() => { if (isIssued) reset(); fillSample(); }} force={!!demo.mode} disabled={phase === 'signing'} />{/* test-docs */}
             <DraftsMenu currentId={draftId} onOpen={(d) => { if (isIssued) reset(); openDraft(d); }} disabled={phase === 'signing'} />
             <Button icon={<Save size={16} />} onClick={saveCurrentDraft} disabled={phase === 'signing' || !!isIssued}>Save draft</Button>
             <Button variant="primary" icon={<Upload size={16} />} onClick={fresh(() => importInput.current?.click())} disabled={phase === 'signing'}>Import JSON</Button>
             <input ref={importInput} type="file" accept=".json,application/json" hidden onChange={(e) => { void importJson(e.target.files?.[0]); e.target.value = ''; }} />
-          </>
-        ) : (
-          <>
-            <Button data-tour="download-elc" icon={<Download size={16} />} onClick={() => downloadJson(issued.vc, `${form.fields.lcNumber || issued.txId}.json`)}>Download signed eLC</Button>
-            <Button icon={<Plus size={16} />} onClick={reset}>Issue another eLC</Button>
           </>
         )}
       />
@@ -246,10 +245,15 @@ export function IssuePage() {
               {sendCtl.state.kind === 'error' ? 'Try sending again' : `Send to ${sendTo.name}`}
             </Button>
           )}>
-          {sendCtl.state.kind === 'error' ? `Not sent: ${sendCtl.state.message}` : `Signed with ${PORTAL.bank.name}'s key and saved to Overview.`}
+          {sendCtl.state.kind === 'error' ? `Not sent: ${sendCtl.state.message}` : `Signed by ${PORTAL.bank.name} ${JURISDICTIONS[PORTAL.bank.jurisdiction].name} and recorded in the ${OWN_REGISTRY}. Next: send it to the advising bank.`}
         </Banner>
       )}
-      {notice && !isIssued && <Banner tone={notice.tone} title={notice.title} onClose={() => setNotice(null)}>{notice.text}</Banner>}
+      {!isIssued && issueCount > 0 && (
+        <Banner tone="bad" title={`Fix ${issueCount} issue${issueCount === 1 ? '' : 's'} before signing`}>
+          {issueLines.map((l) => <span key={l} className="issue-line">{l}</span>)}
+        </Banner>
+      )}
+      {notice && !isIssued && !(issueCount > 0 && notice.tone !== 'bad') && <Banner tone={notice.tone} title={notice.title} onClose={() => setNotice(null)}>{notice.text}</Banner>}
       {phase === 'signing' && <SigningModal />}
       {sentPopup && isIssued && sendTo && sendCtl.state.kind === 'sent' && (
         <SentModal lcNumber={form.fields.lcNumber || issued.txId} partner={sendTo} sent={sendCtl.state.sent} onClose={() => setSentPopup(false)} />
@@ -261,29 +265,26 @@ export function IssuePage() {
             <h2>{current.title}</h2>
             {current.optional && !isIssued && <span className="muted">Optional</span>}
           </div>
-          {isIssued ? <IssuedValues id={current.id} form={form} /> : (
-            <FormSection section={current} form={form} errors={errors} show={show} setField={setField} touch={touch}
+          {/* Issued: the same form, greyed out and locked. */}
+          <fieldset className={`step-form${isIssued ? ' step-form--locked' : ''}`} disabled={!!isIssued}>
+            <FormSection section={current} form={form} errors={errors} show={isIssued ? () => false : show} setField={setField} touch={touch}
               setDocs={(docs) => setForm((f) => ({ ...f, docs }))} attachments={attachments} addFiles={(f) => void addFiles(f)}
               removeAttachment={(i) => setAttachments((a) => a.filter((_, n) => n !== i))} />
+          </fieldset>
+          {/* No Back / Next once the eLC is issued: the process is done. */}
+          {!isIssued && (
+            <div className="step-card__nav">
+              <Button icon={<ArrowLeft size={16} />} onClick={back} disabled={stepIndex === 0}>Back</Button>
+              {stepIndex < sections.length - 1 && (
+                <Button variant="primary" onClick={next}>Next <ArrowRight size={16} /></Button>
+              )}
+            </div>
           )}
-          <div className="step-card__nav">
-            {stepIndex > 0 ? <Button icon={<ArrowLeft size={16} />} onClick={back}>Back</Button> : <span />}
-            {stepIndex < sections.length - 1 && (
-              <Button variant="primary" onClick={next}>Next <ArrowRight size={16} /></Button>
-            )}
-          </div>
         </Card>
         <SidePanel form={form} done={done} issues={issues} showIssues={attempted || issues > 0} embedPdf={embedPdf} setEmbedPdf={setEmbedPdf}
-          phase={phase} onSign={() => void sign()} issued={issued} issuedAt={issuedAt} trustedPartner={trustedPartner}
-          sent={isSent} sendCard={isIssued ? <SendCard vc={issued.vc} ctl={sendCtl} sentOnly showCheck /> : null} />
+          phase={phase} onSign={() => void sign()} issued={issued} issuedAt={issuedAt}
+          sent={isSent} showSignCard={signCardShown} sendCard={isIssued ? <SendCard vc={issued.vc} ctl={sendCtl} showCheck /> : null} />
       </div>
     </>
   );
-}
-
-function IssuedValues({ id, form }: { id: SectionId; form: ElcForm }) {
-  const s = SECTIONS.find((x) => x.id === id)!;
-  const rows = s.fields.filter((f) => form.fields[f.key]).map((f) => ({ label: f.label, tag: f.tag, value: displayValue(f.key, form), wide: f.wide }));
-  if (id === 'documents') rows.unshift({ label: 'Documents required', tag: '46A', value: form.docs.map((d) => `${d.title}${d.detail ? ` — ${d.detail}` : ''}`).join('\n'), wide: true });
-  return <FieldValues rows={rows} />;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BadgeCheck, CalendarCheck, ChevronDown, Download, EyeOff, FileJson, FileText, Fingerprint, Lock, PenLine, Upload } from 'lucide-react';
-import { PORTAL } from '@/config/portal';
+import { OWN_REGISTRY, PORTAL } from '@/config/portal';
 import {
   Button, Card, CopyId, ElcReadOnly, FileDrop, KeyValue, Mark, PageHeader, Spinner, StatusPill, WithFlag,
 } from '@/shared/components';
@@ -109,7 +109,7 @@ export function VerifyPage() {
               <h3 className="verify-side__title">Who checks it</h3>
               <div className="verify-route">
                 <span className="via via--totm">TOTM</span>
-                <span>Issued by a bank in the TOTM issuer registry: checked by the TOTM Trust API.</span>
+                <span>Issued by a bank in the {OWN_REGISTRY}: checked by the TOTM Trust API.</span>
               </div>
               <div className="verify-route">
                 <span className="via via--pila">{PORTAL.externalPlatform.name}</span>

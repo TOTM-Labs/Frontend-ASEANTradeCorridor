@@ -58,6 +58,11 @@ export const PORTAL = {
 };
 
 export const bankLabel = (name: string, j: JurisdictionCode) => `${name} · ${JURISDICTIONS[j].name}`;
+
+/** Name of each side's trust registry as shown in the UI: this bank's side and the external platform's side. */
+export const registryName = (j: JurisdictionCode) => `Trust Registry ${JURISDICTIONS[j].name}`;
+export const OWN_REGISTRY = registryName(PORTAL.bank.jurisdiction);
+export const EXTERNAL_REGISTRY = registryName(PORTAL.externalPlatform.jurisdiction);
 export const homeBankLabel = () => bankLabel(PORTAL.bank.name, PORTAL.bank.jurisdiction);
 export const partnerLabels = () => PORTAL.partners.map((p) => bankLabel(p.name, p.jurisdiction));
 export const partnerByLabel = (label?: string | null) => PORTAL.partners.find((p) => bankLabel(p.name, p.jurisdiction) === label) ?? null;

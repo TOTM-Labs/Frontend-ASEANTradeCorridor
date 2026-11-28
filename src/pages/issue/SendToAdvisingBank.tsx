@@ -91,6 +91,7 @@ export function SendCard({ vc, ctl, sentTo, showCheck = false, sentOnly = false 
           <Button variant="primary" block icon={<Send size={16} />} loading={state.kind === 'sending'} onClick={() => void send()} data-tour="send-elc">
             {state.kind === 'error' ? 'Try again' : `Send to ${partner.name}`}
           </Button>
+          <p className="send-card__note send-card__note--after muted">Only {partner.name} can open it. The send is recorded in the Audit log.</p>
         </>
       ) : sent && (
         <>

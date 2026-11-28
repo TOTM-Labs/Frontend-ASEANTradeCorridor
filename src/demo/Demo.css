@@ -72,3 +72,8 @@
 .sign-modal__steps li { display: flex; align-items: center; gap: 8px; padding: 4px 0; color: var(--faint); transition: color .2s; }
 .sign-modal__steps li.on { color: var(--ink-2); }
 .sign-modal__steps li.done { color: var(--ok); }
+
+/* Signing steps: tick = done, spinner = now, grey dot = still to come (no numbers). */
+.sign-modal__spin { animation: sign-spin 1s linear infinite; }
+.sign-modal__dot { width: 14px; display: inline-flex; justify-content: center; }
+.sign-modal__dot::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #C9CED6; }

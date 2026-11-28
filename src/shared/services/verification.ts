@@ -4,7 +4,7 @@
 //   - issued by a bank in the TOTM issuer registry → TOTM Trust API (TrustVC content check + verification context);
 //   - anything else (PILA-issued eLCs, VC-JWTs, did:nda issuers…) → PILA: the Trust API's /pila/verify runs PILA's Go SDK and
 //     NDAKey's verification context API.
-import { JURISDICTIONS, PORTAL, jurisdictionFromBic, type Jurisdiction } from '@/config/portal';
+import { EXTERNAL_REGISTRY, JURISDICTIONS, OWN_REGISTRY, PORTAL, jurisdictionFromBic, type Jurisdiction } from '@/config/portal';
 import { ApiError } from './http';
 import { pilaVerify, type PilaVerifyResponse } from './pilaApi';
 import { trustApi, type BankEntry, type ElcStatus } from './trustApi';
@@ -194,8 +194,8 @@ async function verifyTotm(vc: Record<string, unknown>, issuer: BankEntry | null)
     trusted.state = v.isIssuerTrusted && v.didPublicKey ? 'pass' : 'fail';
     trusted.detail = [{
       text: trusted.state === 'pass'
-        ? `${issuerName} is in the TOTM issuer registry and may issue eLCs`
-        : 'The issuer is not in the registry, is not active, or may not issue eLCs',
+        ? `${issuerName} is in the ${OWN_REGISTRY} and may issue eLCs`
+        : `The issuer is not in the ${OWN_REGISTRY}, is not active, or may not issue eLCs`,
       state: trusted.state,
     }];
   }
@@ -224,7 +224,7 @@ async function verifyTotm(vc: Record<string, unknown>, issuer: BankEntry | null)
     ...fact('Registry status', issuer.status),
     ...fact('May issue', issuer.allowedDocs?.length ? issuer.allowedDocs.join(', ') : 'Any document type'),
     ...fact('Registered', issuer.validFrom || issuer.validUntil ? `${issuer.validFrom ? fmtDate(issuer.validFrom) : 'open'} – ${issuer.validUntil ? fmtDate(issuer.validUntil) : 'no end date'}` : null),
-    ...fact('Registry', 'TOTM IssuerRegistryV2 (on-chain)'),
+    ...fact('Registry', `${OWN_REGISTRY} (on-chain)`),
   ] : [];
   const checks = [integrity, status, signer, trusted];
   return {
@@ -254,7 +254,7 @@ async function verifyPila(input: Record<string, unknown> | string): Promise<Veri
       { id: 'integrity', title: 'Integrity', question: 'Unchanged since signing?', state: 'error', detail },
       { id: 'status', title: 'Status', question: 'Still valid today?', state: 'error', detail },
       { id: 'issuer', title: 'Issuer', question: 'Signed by the stated issuer?', state: 'error', detail },
-      { id: 'trusted', title: 'Trusted issuer', question: `Trusted by ${PILA_LABEL}?`, state: 'error', detail },
+      { id: 'trusted', title: 'Trusted issuer', question: `In the ${EXTERNAL_REGISTRY}?`, state: 'error', detail },
     ];
     if (err.status === 400) checks.forEach((c) => { c.state = 'fail'; c.detail = [{ text: err.message, state: 'fail' }]; });
     return base(checks, input, fallbackIssuer, null, err.requestId, typeof input === 'string' ? {} : (input.credentialSubject ?? {}) as Record<string, unknown>);
@@ -320,9 +320,9 @@ async function verifyPila(input: Record<string, unknown> | string): Promise<Veri
   const who = nd.issuerName ? `${nd.issuerName}${nd.issuerBic ? ` (${nd.issuerBic})` : ''}` : null;
   const [tState, tText]: [CheckState, string] =
     !ctxOk ? ['error', `Could not reach ${PILA_LABEL}: ${nd.error ?? nd.skipped ?? 'verification context not asked'}`]
-      : nd.isIssuerTrusted ? ['pass', who ? `${who} · registered with ${PILA_LABEL}` : `Registered with ${PILA_LABEL}`]
-        : ['fail', `Not registered with ${PILA_LABEL}`];
-  const trusted: Check = { id: 'trusted', title: 'Trusted issuer', question: `Registered with ${PILA_LABEL}?`, state: tState, detail: [{ text: tText, state: tState }] };
+      : nd.isIssuerTrusted ? ['pass', who ? `${who} · in the ${EXTERNAL_REGISTRY}` : `In the ${EXTERNAL_REGISTRY}`]
+        : ['fail', `Not in the ${EXTERNAL_REGISTRY}`];
+  const trusted: Check = { id: 'trusted', title: 'Trusted issuer', question: `In the ${EXTERNAL_REGISTRY}?`, state: tState, detail: [{ text: tText, state: tState }] };
 
   const pill = noLive && byDate ? byDate.pill : ndStatus === 'not_found' ? 'not on record' : ndStatus === 'verified' ? 'active' : ndStatus ?? null;
   const proof = proofOf(input);
@@ -346,13 +346,13 @@ async function verifyPila(input: Record<string, unknown> | string): Promise<Veri
   trusted.facts = [
     ...fact('Issuing bank', nd.issuerName),
     ...fact('BIC', nd.issuerBic, { mono: true }),
-    ...fact(`Trusted by ${PILA_LABEL}`, ctxOk ? (nd.isIssuerTrusted ? 'Yes' : 'No') : null),
+    ...fact(`In the ${EXTERNAL_REGISTRY}`, ctxOk ? (nd.isIssuerTrusted ? 'Yes' : 'No') : null),
     ...fact('Credential type', r.types?.join(', ')),
   ];
   const v = base([integrity, status, issuer, trusted], input, r.issuer ?? fallbackIssuer, r.id ?? null, requestId, r.subject ?? {}, pill);
   // A registered issuer is shown by its bank name from PILA's registry, not by its DID.
   if (ctxOk && nd.isIssuerTrusted && nd.issuerName) v.issuerName = nd.issuerName;
-  return ctxOk && !nd.isIssuerTrusted ? { ...v, headline: `issuer not registered with ${PILA_LABEL}` } : v;
+  return ctxOk && !nd.isIssuerTrusted ? { ...v, headline: `issuer not in the ${EXTERNAL_REGISTRY}` } : v;
 }
 
 function base(checks: Check[], input: Record<string, unknown> | string, issuerDid: string | null, vcId: string | null,

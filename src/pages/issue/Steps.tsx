@@ -1,6 +1,6 @@
-// Issue eLC step tabs (non-numbered, as agreed with PILA): green tick = step done, dot = current step,
-// grey tick = not done yet, red mark = fields that need attention. Any tab can be opened directly.
-import { Check, X } from 'lucide-react';
+// Issue eLC step tabs (non-numbered, as agreed with PILA; look as in the design): green tick = step done,
+// blue dot = current step, grey dot = not done yet, red ! = fields that need attention. Any tab can be opened directly.
+import { Check } from 'lucide-react';
 import type { SectionId } from '@/shared/services/elcModel';
 
 export type StepState = 'done' | 'todo' | 'bad';
@@ -27,7 +27,7 @@ export function Steps({ steps, current, onSelect, disabled, locked }: {
           <button key={s.id} type="button" className={`steps__tab${on ? ' steps__tab--on' : ''}`} aria-current={on ? 'step' : undefined}
             onClick={() => onSelect(s.id)} disabled={disabled}>
             <span className={`steps__mark steps__mark--${mark}`} aria-hidden>
-              {mark === 'done' || mark === 'todo' ? <Check size={11} strokeWidth={3.2} /> : mark === 'bad' ? <X size={11} strokeWidth={3.2} /> : <span className="steps__dot" />}
+              {mark === 'done' ? <Check size={11} strokeWidth={3.2} /> : mark === 'bad' ? <span className="steps__bang">!</span> : <span className="steps__dot" />}
             </span>
             {s.label}
           </button>

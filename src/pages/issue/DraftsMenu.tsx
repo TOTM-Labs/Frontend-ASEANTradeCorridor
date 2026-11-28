@@ -30,7 +30,7 @@ export function DraftsMenu({ currentId, onOpen, disabled }: { currentId: string 
             );
           })}
           <MenuDivider />
-          <p className="drafts__foot">Saved in this browser only. Drafts are kept for {DRAFT_DAYS} days.</p>
+          <p className="drafts__foot">Saved in this browser only. Drafts are kept for {DRAFT_DAYS} days. The bin icon deletes a draft.</p>
         </div>
       )}
     </Popover>

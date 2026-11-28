@@ -11,6 +11,11 @@
 .input:read-only, .input:disabled { background: var(--bg-sunk); color: var(--ink-2); }
 .input--area { height: auto; min-height: 88px; padding: 10px 12px; resize: vertical; line-height: 1.5; }
 .field--error .input { border-color: var(--bad); }
+.field__control { position: relative; }
+.field__inline-error { position: absolute; right: 12px; top: 11px; font-size: 12px; font-weight: 500; color: var(--bad); pointer-events: none; }
+.field--missing .input { padding-right: 76px; }
+.field__control:has(.select) .field__inline-error { right: 36px; }
+.field__control:has(input[type="date"]) .field__inline-error { right: 40px; }
 .select { position: relative; }
 .select .input { appearance: none; padding-right: 36px; cursor: pointer; }
 .select__chev { position: absolute; right: 12px; top: 12px; color: var(--muted); pointer-events: none; }

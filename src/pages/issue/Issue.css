@@ -55,20 +55,34 @@
 .send-card__note { font-size: 12px; margin: 0 0 8px; }
 .banner-sent { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px; color: var(--ok); }
 
-/* Step tabs (non-numbered): one strip across the page, under the header. */
-.steps { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 4px; margin-bottom: 16px; overflow-x: auto; }
+/* Step tabs (non-numbered): one strip across the page, under the header, tabs split by thin dividers. */
+.steps { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 16px; overflow-x: auto; }
 .steps__tab { flex: 1 1 0; min-width: max-content; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: none;
-  padding: 10px 14px; border-radius: 8px; font: inherit; font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer; position: relative; white-space: nowrap; }
+  padding: 12px 14px; font: inherit; font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer; position: relative; white-space: nowrap; }
+.steps__tab + .steps__tab { border-left: 1px solid var(--line); }
+.steps__tab:first-child { border-radius: 12px 0 0 12px; }
+.steps__tab:last-child { border-radius: 0 12px 12px 0; }
 .steps__tab:hover:not(:disabled) { background: var(--bg-soft); color: var(--ink); }
-.steps__tab--on { color: var(--primary); font-weight: 600; }
-.steps__tab--on::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: -4px; height: 2px; border-radius: 2px; background: var(--primary); }
+.steps__tab--on, .steps__tab--on:hover:not(:disabled) { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.steps__tab--on::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--primary); }
 .steps__tab:disabled { cursor: default; }
 .steps__mark { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; }
 .steps__mark--done { background: var(--ok-mark); }
-.steps__mark--todo { background: var(--bg-sunk); color: var(--faint); }
+.steps__mark--todo { background: var(--bg-sunk); }
+.steps__mark--todo .steps__dot { background: #B8BEC8; }
 .steps__mark--bad { background: var(--bad-ink); }
-.steps__mark--on { background: var(--primary-soft); box-shadow: inset 0 0 0 1.5px var(--primary); }
+.steps__bang { font-size: 12px; font-weight: 800; line-height: 1; }
+.steps__mark--on { background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--primary); }
 .steps__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+
+/* Issued: the form stays, greyed out and locked. */
+.step-form { border: 0; margin: 0; padding: 0; min-width: 0; }
+.step-form--locked .input, .step-form--locked .segmented__opt { background: var(--bg-sunk); color: var(--ink-2); cursor: default; }
+.step-form--locked .add-link, .step-form--locked .icon-btn, .step-form--locked .select__chev { display: none; }
+.step-form--locked .field__req { display: none; }
+
+/* "Fix N issues before signing" lines. */
+.issue-line { display: block; }
 
 /* One section per step, with Back / Next. */
 .step-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
@@ -86,3 +100,4 @@
 .sign-modal .sent-modal__wait { display: flex; align-items: flex-start; gap: 8px; text-align: left; margin-top: 14px; font-size: 12.5px; }
 .sent-modal__dot { width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; flex: none; margin-top: 5px; }
 .sent-modal__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+.send-card__note--after { margin: 10px 0 0; font-size: 12px; line-height: 1.45; }

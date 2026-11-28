@@ -12,18 +12,22 @@ interface FieldProps {
   htmlFor?: string;
 }
 
-/** Label (with MT700 tag and required star), control, and an error line. */
-export const Field = ({ label, tag, required, error, wide, children, htmlFor }: FieldProps) => (
-  <div className={`field${wide ? ' field--wide' : ''}${error ? ' field--error' : ''}`}>
-    <label className="field__label" htmlFor={htmlFor}>
-      {label}
-      {required && <span className="field__req">*</span>}
-      {tag && <span className="field__tag">{tag}</span>}
-    </label>
-    {children}
-    {error && <span className="field__error"><AlertCircle size={13} /> {error}</span>}
-  </div>
-);
+/** Label (with MT700 tag and required star), control, and the error: "Required" sits inside the control on the
+ *  right (as in the design); other messages go on a line below. */
+export const Field = ({ label, tag, required, error, wide, children, htmlFor }: FieldProps) => {
+  const inline = error === 'Required';
+  return (
+    <div className={`field${wide ? ' field--wide' : ''}${error ? ' field--error' : ''}${inline ? ' field--missing' : ''}`}>
+      <label className="field__label" htmlFor={htmlFor}>
+        {label}
+        {required && <span className="field__req">*</span>}
+        {tag && <span className="field__tag">{tag}</span>}
+      </label>
+      {inline ? <div className="field__control">{children}<span className="field__inline-error">Required</span></div> : children}
+      {error && !inline && <span className="field__error"><AlertCircle size={13} /> {error}</span>}
+    </div>
+  );
+};
 
 export const FieldGrid = ({ children }: { children: ReactNode }) => <div className="field-grid">{children}</div>;
 
